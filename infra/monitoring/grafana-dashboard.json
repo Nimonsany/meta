@@ -1,0 +1,115 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "E-commerce Empire Monitoring",
+    "timezone": "browser",
+    "tags": ["ecommerce", "java", "postgres", "redis"],
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "type": "stat",
+        "title": "Java Core Health",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "up{job=\"java-core\"}",
+            "legendFormat": "java-core-up"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "options": {
+          "colorMode": "value",
+ "textMode": "average"
+        }
+      },
+      {
+        "type": "stat",
+        "title": "Postgres Connections",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "pg_stat_activity_count",
+            "legendFormat": "postgres-connections"
+          }
+        ],
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "options": {
+          "colorMode": "value",
+ "textMode": "last"
+        }
+      },
+      {
+        "type": "stat",
+        "title": "Redis Used Memory",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "redis_memory_used_bytes",
+            "legendFormat": "redis-memory"
+          }
+        ],
+        "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+        "options": {
+          "colorMode": "value",
+ "textMode": "last"
+        }
+      },
+      {
+        "type": "graph",
+        "title": "Java JVM Memory",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+            "legendFormat": "heap-used"
+          },
+          {
+            "expr": "jvm_memory_used_bytes{area=\"non-heap\"}",
+            "legendFormat": "non-heap-used"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 5, "w": 18, "h": 8 },
+        "options": {
+          "lines": true,
+ "fill": true,
+ "linewidth": 2
+        }
+      },
+      {
+        "type": "stat",
+        "title": "Order Events Rate",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "redis_xadd_total",
+            "legendFormat": "order-events-total"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 13, "w": 6, "h": 4 },
+        "options": {
+          "colorMode": "value",
+ "textMode": "last"
+        }
+      },
+      {
+        "type": "stat",
+        "title": "Uptime Kuma Status",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "uptime_kuma_monitor_up",
+            "legendFormat": "monitor-up"
+          }
+        ],
+        "gridPos": { "x": 6, "y": 13, "w": 6, "h": 4 },
+        "options": {
+          "colorMode": "value",
+ "textMode": "last"
+        }
+      }
+    ]
+  },
+  "overwrite": true
+}
