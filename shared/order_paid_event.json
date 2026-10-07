@@ -1,0 +1,12 @@
+{
+  "orderId": "123",
+  "status": "PAID",
+  "userId": "10",
+  "sellerId": "5",
+  "amount": 1500,
+  "items": [
+    {"productId": 1, "qty": 2},
+    {"productId": 3, "qty": 1}
+  ],
+  "timestamp": "2026-05-13T10:00:00Z"
+}
