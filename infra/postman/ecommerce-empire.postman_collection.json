@@ -1,0 +1,343 @@
+/*
+ * E-commerce Empire Postman Collection
+ * Complete API documentation for Java Core + Node.js Real-time + Mock
+ * 
+ * Base URL variables:
+ - {{baseUrl}} = http://localhost
+ - {{port}} = 80 (or 3000/3001 for mock)
+ - {{jwt}} = user JWT token
+ - {{sellerJwt}} = seller JWT token  
+ - {{adminJwt}} = admin JWT token
+ */
+
+ // ============================================
+ // Environment Variables
+ // ============================================
+ @environment
+ {
+   "key": "baseUrl",
+   "value": "http://localhost",
+   "type": "default"
+ },
+ {
+   "key": "port",
+   "value": "80",
+   "type": "default"
+ },
+ {
+   "key": "jwt",
+   "value": "",
+   "type": "default"
+ },
+ {
+   "key": "sellerJwt",
+   "value": "",
+   "type": "default"
+ },
+ {
+   "key": "adminJwt",
+   "value": "",
+   "type": "default"
+ },
+
+ // ============================================
+ // JAVA ENDPOINTS (15 endpoints)
+// ============================================
+
+ /// ### Authentication
+
+ /** POST /api/java/auth/login
+  * Login and receive JWT tokens
+  * Authentication required: Public (no JWT needed)
+  */
+ {{baseUrl}}:80/api/java/auth/login
+ POST
+ Body: raw JSON: {
+   "userId": "buyer_1",
+   "role": "buyer",
+   "sellerId": ""
+ }
+ Authorization: {{jwt}}
+
+ /** POST /api/java/auth/register
+  * Register new user (customer/seller/delivery_agent)
+  * Authentication required: Public
+  */
+ {{baseUrl}}:80/api/java/auth/register
+ POST
+ Body: raw JSON: {
+   "userId": "buyer_1",
+   "email": "buyer_1@example.com",
+   "password": "password123",
+   "role": "buyer",
+   "sellerId": ""
+ }
+
+ /** GET /api/java/auth/me
+  * Get current user profile from JWT
+  * Authentication required: Bearer JWT
+  */
+ {{baseUrl}}:80/api/java/auth/me
+ GET
+ Authorization: Bearer {{jwt}}
+
+ /// ### Seller Endpoints
+
+ /** GET /api/java/sellers/{id}
+  * Get public seller profile
+  * Authentication required: Public (optional JWT for auditing)
+  */
+ {{baseUrl}}:80/api/java/sellers/{{sellerId}}
+ GET
+ Authorization: {{sellerJwt}} (optional)
+
+ /** PUT /api/java/sellers/kyc
+  * Upload KYC document (citizenship/PAN)
+  * Stores URL only - actual file goes to MinIO via Node
+  * Authentication required: Bearer JWT
+  */
+ {{baseUrl}}:80/api/java/sellers/kyc
+ PUT
+ Body: raw JSON: {
+   "documentUrl": "minio://seller-docs/seller_1/citizenship.pdf"
+ }
+ Authorization: {{sellerJwt}}
+
+ /** GET /api/java/admin/sellers
+  * List all sellers for KYC verification (ADMIN only)
+  * Authentication required: Admin JWT
+  */
+ {{baseUrl}}:80/api/java/admin/sellers
+ GET
+ Authorization: {{adminJwt}}
+
+ /** PUT /api/java/admin/sellers/{id}/verify
+  * ADMIN verify seller KYC
+  * Authentication required: Admin JWT
+  */
+ {{baseUrl}}:80/api/java/admin/sellers/{{sellerId}}/verify
+ PUT
+ Authorization: {{adminJwt}}
+
+ /// ### Order Endpoints
+
+ /** POST /api/java/orders
+  * Create new order (publishes to Redis Stream order_events)
+  * Authentication required: Bearer JWT
+  */
+ {{baseUrl}}:80/api/java/orders
+ POST
+ Body: raw JSON: {
+   "userId": "buyer_1",
+   "sellerId": "seller_1",
+   "amount": 1500,
+   "items": [
+     { "productId": "1", "qty": 2 }
+   ]
+ }
+ Authorization: {{jwt}}
+
+ /** GET /api/java/orders/my
+  * Get current user's orders
+  * Authentication required: Bearer JWT
+  */
+ {{baseUrl}}:80/api/java/orders/my
+ GET
+ Authorization: {{jwt}}
+
+ /** GET /api/java/orders/seller/my
+  * Get seller's orders (RLS must enforce - seller can only see own orders)
+  * Authentication required: Bearer JWT
+  */
+ {{baseUrl}}:80/api/java/orders/seller/my
+ GET
+ Authorization: {{jwt}}
+
+ /// ### Payment Endpoints
+
+ /** POST /api/java/payments
+  * Process payment with Idempotency-Key header
+  * Authentication required: Bearer JWT
+  * Headers: Idempotency-Key (required)
+  */
+ {{baseUrl}}:80/api/java/payments
+ POST
+ Body: raw JSON: {
+   "paymentId": "pay_1",
+   "orderId": "order_1",
+   "amount": 1500,
+   "currency": "USD"
+ }
+ Authorization: {{jwt}}
+ Header: Idempotency-Key: {{paymentId}}_{{timestamp}}
+
+ /** POST /api/java/payments/refund
+  * Process payment refund
+  * Authentication required: Bearer JWT
+  */
+ {{baseUrl}}:80/api/java/payments/refund
+ POST
+ Body: raw JSON: {
+   "paymentId": "pay_1"
+ }
+ Authorization: {{jwt}}
+
+ /// ### Inventory Endpoints
+
+ /** POST /api/java/inventory/reserve
+  * Reserve items with Redis Redlock + SELECT FOR UPDATE
+  * Authentication required: Bearer JWT
+  */
+ {{baseUrl}}:80/api/java/inventory/reserve
+ POST
+ Body: raw JSON: {
+   "orderId": "order_1",
+   "sellerId": "seller_1",
+   "quantity": 2
+ }
+ Authorization: {{jwt}}
+
+ /// ### Payout Endpoints
+
+ /** POST /api/java/payouts
+  * Process payout to seller
+  * Authentication required: Bearer JWT
+  */
+ {{baseUrl}}:80/api/java/payouts
+ POST
+ Body: raw JSON: {
+   "paymentId": "pay_1",
+   "sellerId": "seller_1",
+   "amount": 1500
+ }
+ Authorization: {{jwt}}
+
+ /** GET /api/java/payouts/{id}
+  * Check payout status
+  * Authentication required: Bearer JWT
+  */
+ {{baseUrl}}:80/api/java/payouts/{{paymentId}}
+ GET
+ Authorization: {{jwt}}
+
+ // ============================================
+ // NODE ENDPOINTS (10 endpoints - expected from CONTRACT.md)
+// ============================================
+
+ /// ### Node.js Real-time Endpoints
+
+ /** GET /api/node/products/search?q=<query>
+  * Search products via Node.js realtime service
+  * Authentication: Public (or seller JWT if seller-specific)
+  */
+ {{baseUrl}}:3000/api/node/products/search?q=leather
+ GET
+ Query: q=leader
+
+ /** POST /api/node/delivery/nearest
+  * Get nearest delivery agent position
+  * Authentication: Public
+  */
+ {{baseUrl}}:3000/api/node/delivery/nearest
+ POST
+ Body: raw JSON: {
+   "lat": 27.71,
+   "lng": 85.31
+ }
+
+ /// ### Socket.io Real-time Events
+
+ /** Socket.io: tracking:update
+  * Emitted every 3 seconds from Node.js realtime service
+  * Connection: ws://localhost:3000 (or ws://mock:3001 for mock)
+  * 
+  * Message format:
+  {
+    "agentId": "a1b2c3d4",
+    "lat": 27.7143,
+    "lng": 85.3127,
+    "status": "online",    // or "delivering"
+    "timestamp": "2026-05-13T10:00:00Z"
+  }
+  * 
+  * Usage in frontend:
+  *   const socket = io('http://localhost:3000')
+  *   socket.on('tracking:update', (data) => {
+  *     console.log('Delivery agent location:', data.lat, data.lng)
+ *   })
+  */
+
+/ /// ### Node.js Order Status (WebSocket / Streams)
+
+ /** WebSocket: order status updates
+  * Subscribe to real-time order status changes
+  * Via Redis Streams: order_events channel
+  * 
+  * Message format (from CONTRACT.md):
+  {
+    "orderId": "123",
+    "status": "PAID",          // pending, confirmed, shipped, delivered, cancelled
+    "userId": "10",
+    "sellerId": "5",
+    "amount": 1500,
+    "items": [{"productId": "1", "qty": 2}],
+    "timestamp": "2026-05-13T10:00:00Z"
+  }
+  */
+
+/ /// ### Node.js Health Check
+
+ /** GET /api/node/health
+  * Health check for Node.js service
+  * Authentication: Public
+  */
+ {{baseUrl}}:3000/api/node/health
+ GET
+
+ // ============================================
+ // SOCKET.IO TEST INSTRUCTIONS
+ // ============================================
+
+/**
+ * Socket.io Test Setup:
+ * 
+ * 1. Start the mock server: API_URL=http://mock:3001
+ *    OR start the real node-realtime service
+ * 
+ * 2. In Postman, go to the "Tests" tab and add:
+ *    const io = require('socket.io-client')
+ *    const socket = io('http://localhost:3000')
+ *    
+ *    socket.on('connect', () => {
+ *      console.log('Connected to Socket.io', socket.id)
+ *    })
+ *    
+ *    socket.on('tracking:update', (data) => {
+ *      pm.environment.set('agentLat', data.lat)
+ *      pm.environment.set('agentLng', data.lng)
+ *      pm.environment.set('agentStatus', data.status)
+ *    })
+ *    
+ *    setTimeout(() => {
+ *      socket.disconnect()
+ *      pm.test('Socket.io connected', () => {
+ *        pm.environment.get('agentLat') !== undefined
+ *      })
+ *    }, 3500)
+ * 
+ * 3. Or use Postman's WebSocket feature:
+ *    - Create a WebSocket request to ws://localhost:3000
+ *    - Listen for 'tracking:update' events
+ */
+
+/*
+ * NOTES:
+ * - Java endpoints use port 80 (nginx reverse proxy)
+ * - Node endpoints use port 3000 (real) or 3001 (mock)
+ * - All Java endpoints require JWT authentication
+ * - Node.js endpoints are public (for development/mock)
+ * - JWT_SECRET must be shared between Java and Node (from .env.example)
+ * - Redis Stream order_events format defined in CONTRACT.md
+ * - Idempotency-Key header required for payment endpoints
+ * - Nginx rate limits: 60r/m for /api/java/*, 10r/s for /api/java/auth/login
+ */
